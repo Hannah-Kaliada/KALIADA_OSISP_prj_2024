@@ -7,8 +7,6 @@ typedef struct directory_ {
   char *files[];
 } directory_t;
 
-#define FILE_OPENER "xdg-open"
-
 #define DIR_COLOR 2
 
 #define STATUS_SELECTED_COLOR 1
