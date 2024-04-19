@@ -15,8 +15,6 @@
 
 #include "config.h"
 
-#define isDir(mode) (S_ISDIR(mode))
-
 struct stat file_stats;
 WINDOW *current_win, *info_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
@@ -49,7 +47,6 @@ int main() {
     setlocale(LC_ALL, "ru_RU.UTF-8");
     init();
     init_curses();
-    getcwd(current_directory_->cwd, sizeof(current_directory_->cwd));
     strcat(current_directory_->cwd, "/");
     current_directory_->parent_dir =
         strdup(get_parent_directory(current_directory_->cwd));
@@ -117,20 +114,16 @@ int main() {
             case KEY_ENTER:
                 handle_enter(files);
                 break;
-            case 'r':
-            case 'R':
+            case KEY_RENAME:
                 rename_file(files);
                 break;
-            case 'c':
-            case 'C':
+            case KEY_COPY:
                 copy_files(files);
                 break;
-            case 'm':
-            case 'M':
+            case KEY_MOVE:
                 move_file(files);
                 break;
-            case 'd':
-            case 'D':
+            case KEY_DELETE:
                 delete_file(files);
                 break;
         }
