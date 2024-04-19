@@ -19,4 +19,14 @@ typedef struct directory_ {
 
 #define KEY_ENTER 10
 
+#define KEY_RENAME 'r'
+
+#define KEY_COPY 'c'
+
+#define KEY_DELETE 'd'
+
+#define KEY_MOVE 'm'
+
+#define isDir(mode) (S_ISDIR(mode))
+
 #endif
