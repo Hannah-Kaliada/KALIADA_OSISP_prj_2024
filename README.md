@@ -66,8 +66,12 @@
 <pre>
 	<code>make sudo</code>
 </pre>
-<h2>Dependencies</h2>
-<p>This program requires the ncurses library for terminal UI.</p>
+ <h2>Dependencies</h2>
+    <p>This program requires the ncurses library for terminal UI. The `pkg-config` tool is used to manage this dependency in the makefile.</p>
+    <p>Before compiling, make sure you have `ncurses` installed on your system. You can install it using the package manager of your Linux distribution:</p>
+    <pre><code>sudo apt-get install libncurses5-dev</code></pre>
+    <p>Or:</p>
+    <pre><code>sudo yum install ncurses-devel</code></pre>
 <h2>Development Environment Details</h2>
 <ul>
   <li>Operating System: macOS Sonoma 14.4.1 (Build 23E224)</li>
