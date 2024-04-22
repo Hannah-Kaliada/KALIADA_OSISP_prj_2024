@@ -62,9 +62,9 @@
 <pre>
 	<code>./main</code>
 </pre>
-<p>You can also use <code>make run</code> to compile and execute the program with elevated privileges: </p>
+<p>You can also use <code>make sudo</code> to compile and execute the program with elevated privileges: </p>
 <pre>
-	<code>make run</code>
+	<code>make sudo</code>
 </pre>
 <h2>Dependencies</h2>
 <p>This program requires the ncurses library for terminal UI.</p>
