@@ -5,21 +5,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "config.h"
+
+#define N strlen(gen_poly)  // Длина генерирующего полинома
 
 struct stat file_stats;
 WINDOW *current_win, *info_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
-size_t total_files = 0;
 directory_t* current_directory_ = NULL;
+char gen_poly[10];       // Генерирующий полином
+char check_value[28];    // Сумма для проверки CRC
+char checked_value[28];  // Проверяемые данные из файла
 
 void init_curses();
 void init();
@@ -42,6 +45,7 @@ void handle_enter(char* files[]);
 float get_recursive_size_directory(char* path);
 void show_file_info(char* files[]);
 char* get_parent_directory(char* cwd);
+void crc(char* files[]);
 
 int main() {
     setlocale(LC_ALL, "ru_RU.UTF-8");
@@ -126,6 +130,8 @@ int main() {
             case KEY_DELETE:
                 delete_file(files);
                 break;
+            case 's':
+                crc(files);
         }
         for (int i = 0; i < len; i++) {
             free(files[i]);
@@ -181,14 +187,14 @@ void init_windows() {
                0);  // Окно для отображения текущего пути (нижняя часть экрана)
     info_win = newwin(maxy, maxx / 2, 0,
                       maxx / 2);  // Окно для отображения информации о выбранном
-                                  // файле (правая часть экрана)
+    // файле (правая часть экрана)
 
     // Обновление экрана с помощью функции refresh()
     refresh();  // Обновление стандартного экрана (stdscr)
 
     // Установка режима обработки клавиш для окна current_win
     keypad(current_win, TRUE);  // Разрешает обработку специальных клавиш
-                                // (например, стрелок) в current_win
+    // (например, стрелок) в current_win
 }
 
 /**
@@ -217,21 +223,21 @@ void refreshWindows() {
  */
 int get_number_of_files_in_directory(char* directory) {
     int len = 0;
-      DIR *dir_;
-      struct dirent *dir_entry;
+    DIR* dir_;
+    struct dirent* dir_entry;
 
-      dir_ = opendir(directory);
-      if (dir_ == NULL) {
+    dir_ = opendir(directory);
+    if (dir_ == NULL) {
         return -1;
-      }
+    }
 
-      while ((dir_entry = readdir(dir_)) != NULL) {
+    while ((dir_entry = readdir(dir_)) != NULL) {
         if (strcmp(dir_entry->d_name, ".") != 0) {
-          len++;
+            len++;
         }
-      }
-      closedir(dir_);
-      return len;
+    }
+    closedir(dir_);
+    return len;
 }
 
 /**
@@ -243,23 +249,23 @@ int get_number_of_files_in_directory(char* directory) {
  * @return Возвращает 1 в случае успешного получения имен файлов или -1 в случае
  * ошибки.
  */
-int get_files(char *directory, char *target[]) {
-  int i = 0;
-  DIR *dir_;
-  struct dirent *dir_entry;
+int get_files(char* directory, char* target[]) {
+    int i = 0;
+    DIR* dir_;
+    struct dirent* dir_entry;
 
-  dir_ = opendir(directory);
-  if (dir_ == NULL) {
-    return -1;
-  }
-
-  while ((dir_entry = readdir(dir_)) != NULL) {
-    if (strcmp(dir_entry->d_name, ".") != 0) {
-      target[i++] = strdup(dir_entry->d_name);
+    dir_ = opendir(directory);
+    if (dir_ == NULL) {
+        return -1;
     }
-  }
-  closedir(dir_);
-  return 1;
+
+    while ((dir_entry = readdir(dir_)) != NULL) {
+        if (strcmp(dir_entry->d_name, ".") != 0) {
+            target[i++] = strdup(dir_entry->d_name);
+        }
+    }
+    closedir(dir_);
+    return 1;
 }
 
 /**
@@ -278,7 +284,7 @@ void scroll_up() {
     selection = (selection < 0)
                     ? 0
                     : selection;  // Если индекс выбора стал отрицательным,
-                                  // устанавливаем его в 0
+    // устанавливаем его в 0
 
     // Проверяем, достаточно ли много файлов для прокрутки
     if (len >= maxy - 1) {
@@ -289,11 +295,11 @@ void scroll_up() {
             // current_win
             if (start == 0) {
                 wclear(current_win);  // Очищаем окно current_win (удаляем
-                                      // старое содержимое)
+                // старое содержимое)
             } else {
                 start--;  // Уменьшаем начальную позицию (сдвигаем список вверх)
                 wclear(current_win);  // Очищаем окно current_win для обновления
-                                      // содержимого
+                // содержимого
             }
         }
     }
@@ -316,7 +322,7 @@ void scroll_down() {
     selection = (selection > len - 1)
                     ? len - 1
                     : selection;  // Проверяем, не превысил ли индекс выбора
-                                  // количество файлов - 1
+    // количество файлов - 1
 
     // Проверяем, достаточно ли много файлов для прокрутки
     if (len >= maxy - 1) {
@@ -326,9 +332,9 @@ void scroll_down() {
             // Проверяем, достигла ли начальная позиция конца списка
             if (start + maxy - 2 != len) {
                 start++;  // Увеличиваем начальную позицию (сдвигаем список
-                          // вниз)
+                // вниз)
                 wclear(current_win);  // Очищаем окно current_win для обновления
-                                      // содержимого
+                // содержимого
             }
         }
     }
@@ -355,7 +361,7 @@ void sort(char* files_[], int n) {
                 strcpy(files_[i],
                        files_[j]);  // Заменяем текущий элемент на следующий
                 strcpy(files_[j], temp);  // Заменяем следующий элемент на
-                                          // текущий из временного буфера
+                // текущий из временного буфера
             }
         }
     }
@@ -372,7 +378,7 @@ int check_text(char* path) {
     ptr = fopen(path, "r");  // Открываем файл для чтения
     if (ptr == NULL) {
         perror("Error opening file");  // Выводим сообщение об ошибке, если не
-                                       // удалось открыть файл
+        // удалось открыть файл
         return 0;  // Возвращаем 0, чтобы указать на ошибку
     }
 
@@ -381,10 +387,10 @@ int check_text(char* path) {
         (c = fgetc(ptr)) !=
         EOF) {  // Читаем файл посимвольно, пока не достигнем конца файла (EOF)
         if (c < 0 || c > 127) {  // Проверяем, является ли символ непечатаемым
-                                 // (вне диапазона ASCII)
-            fclose(ptr);         // Закрываем файл
+            // (вне диапазона ASCII)
+            fclose(ptr);  // Закрываем файл
             return 0;  // Возвращаем 0, чтобы указать на наличие непечатаемого
-                       // символа
+            // символа
         }
     }
 
@@ -408,7 +414,7 @@ void read_(char* path) {
     ptr = fopen(path, "rb");  // Открываем файл для чтения в бинарном режиме
     if (ptr == NULL) {
         perror("Error");  // Выводим сообщение об ошибке, если не удалось
-                          // открыть файл
+        // открыть файл
         return;
     }
 
@@ -436,7 +442,7 @@ void read_(char* path) {
             fseek(ptr, pos * (maxx - 2),
                   SEEK_SET);  // Перемещаем указатель в нужное место файла
             size_t bytesRead = fread(buffer, sizeof(unsigned char), maxx - 2,
-                                  ptr);  // Читаем данные из файла
+                                     ptr);  // Читаем данные из файла
             if (bytesRead > 0) {
                 wmove(current_win, ++t,
                       1);  // Перемещаем курсор в следующую строку
@@ -453,7 +459,7 @@ void read_(char* path) {
         switch (ch) {
             case KEY_UP:
                 pos = pos == 0 ? 0 : pos - 1;  // Перемещаемся вверх по файлу
-                                               // (уменьшаем позицию)
+                // (уменьшаем позицию)
                 break;
             case KEY_DOWN:
                 pos++;  // Перемещаемся вниз по файлу (увеличиваем позицию)
@@ -480,7 +486,7 @@ void readInNano(char* path) {
         execlp("nano", "nano", path,
                NULL);  // Запускаем программу nano для открытия файла
         perror("exec");  // В случае ошибки выполнения exec выводим сообщение об
-                         // ошибке
+        // ошибке
         exit(EXIT_FAILURE);  // Завершаем дочерний процесс с ошибкой
     } else if (pid < 0) {  // Ошибка при вызове fork()
         perror("fork");  // Выводим сообщение об ошибке
@@ -493,12 +499,12 @@ void readInNano(char* path) {
             perror("waitpid");  // Выводим сообщение об ошибке
         } else {
             if (WIFEXITED(status)) {  // Проверяем, завершился ли дочерний
-                                      // процесс нормально
+                // процесс нормально
                 tcsetattr(
                     STDIN_FILENO, TCSANOW,
                     &original_termios);  // Восстанавливаем настройки терминала
             } else if (WIFSIGNALED(status)) {  // Проверяем, завершился ли
-                                               // дочерний процесс из-за сигнала
+                // дочерний процесс из-за сигнала
                 printf("nano editor terminated by signal: %d\n",
                        WTERMSIG(status));  // Выводим информацию о сигнале
             }
@@ -586,7 +592,7 @@ char* get_parent_directory(char* cwd) {
         ;
 
     a[++i] = '\0';  // Установка завершающего нуля для формирования строки
-                    // родительского каталога
+    // родительского каталога
     return a;
 }
 
@@ -669,12 +675,14 @@ void copy_files(char* files[]) {
 
     // Формируем полный путь до нового каталога/файла
     char target_path[1000];
-    snprintf(target_path, sizeof(target_path), "%s/%s", new_path, files[selection]);
+    snprintf(target_path, sizeof(target_path), "%s/%s", new_path,
+             files[selection]);
 
     // Открываем старый файл для чтения и новый файл для записи
     FILE *old_file, *new_file;
     char curr_path[1000];
-    snprintf(curr_path, sizeof(curr_path), "%s/%s", current_directory_->cwd, files[selection]);
+    snprintf(curr_path, sizeof(curr_path), "%s/%s", current_directory_->cwd,
+             files[selection]);
 
     old_file = fopen(curr_path, "rb");
     if (old_file == NULL) {
@@ -702,7 +710,8 @@ void copy_files(char* files[]) {
     // Очищаем окно current_win и выводим информацию об успешном копировании
     wclear(current_win);
     wmove(current_win, 10, 10);
-    wprintw(current_win, "File copied successfully from\n%s\nto\n%s\n", curr_path, target_path);
+    wprintw(current_win, "File copied successfully from\n%s\nto\n%s\n",
+            curr_path, target_path);
     wrefresh(current_win);
 }
 
@@ -845,27 +854,220 @@ void show_file_info(char* files[]) {
                  current_directory_->cwd, files[selection]);
 
         struct stat file_stats;
+
         // Получаем информацию о выбранном элементе с помощью lstat
         if (lstat(temp_address, &file_stats) == 0) {
             wprintw(info_win, "Name: %s\n", files[selection]);
-            // Определяем тип элемента (каталог, файл или ссылка)
-            if (S_ISLNK(file_stats.st_mode)) {
-                wprintw(info_win, " Type: Symbolic Link\n");
-            } else if (S_ISDIR(file_stats.st_mode)) {
-                wprintw(info_win, " Type: Directory\n");
-            } else if (S_ISREG(file_stats.st_mode)) {
-                wprintw(info_win, " Type: Regular File\n");
-                // Если элемент - файл, выводим его размер в KB
-                wprintw(info_win, " Size: %.2f KB\n",
-                        (float)file_stats.st_size / (float)1024);
-            } else {
-                wprintw(info_win, " Type: Unknown\n");
+
+            // Определяем тип файла
+            wprintw(info_win, " Type:");
+            switch (file_stats.st_mode & S_IFMT) {
+                case S_IFREG:
+                    wprintw(info_win, " Regular File\n");
+                    break;
+                case S_IFDIR:
+                    wprintw(info_win, " Directory\n");
+                    break;
+                case S_IFLNK:
+                    wprintw(info_win, " Symbolic Link\n");
+                    break;
+                case S_IFIFO:
+                    wprintw(info_win, " FIFO/Named Pipe\n");
+                    break;
+                case S_IFCHR:
+                    wprintw(info_win, " Character Device\n");
+                    break;
+                case S_IFBLK:
+                    wprintw(info_win, " Block Device\n");
+                    break;
+                case S_IFSOCK:
+                    wprintw(info_win, " Socket\n");
+                    break;
+                default:
+                    wprintw(info_win, " Unknown\n");
+                    break;
             }
+            wprintw(info_win, " Permissions: ");
+            wprintw(info_win, (file_stats.st_mode & S_IRUSR) ? "r" : "-");
+            wprintw(info_win, (file_stats.st_mode & S_IWUSR) ? "w" : "-");
+            wprintw(info_win, (file_stats.st_mode & S_IXUSR) ? "x" : "-");
+            wprintw(info_win, (file_stats.st_mode & S_IRGRP) ? "r" : "-");
+            wprintw(info_win, (file_stats.st_mode & S_IWGRP) ? "w" : "-");
+            wprintw(info_win, (file_stats.st_mode & S_IXGRP) ? "x" : "-");
+            wprintw(info_win, (file_stats.st_mode & S_IROTH) ? "r" : "-");
+            wprintw(info_win, (file_stats.st_mode & S_IWOTH) ? "w" : "-");
+            wprintw(info_win, (file_stats.st_mode & S_IXOTH) ? "x" : "-");
+            wprintw(info_win, "\n");
+            // Выводим дополнительную информацию
+            wprintw(info_win, " Device ID: [%lx,%lx]\n",
+                    (long)major(file_stats.st_dev),
+                    (long)minor(file_stats.st_dev));
+            wprintw(info_win, " Number of Links: %ld\n",
+                    (long)file_stats.st_nlink);
+            if (!S_ISDIR(file_stats.st_mode)) {
+                long long size = file_stats.st_size;
+                const char* unit;
+
+                if (size < 1024LL) {
+                    unit = "B";
+                } else if (size < 1024LL * 1024LL) {
+                    size /= 1024LL;
+                    unit = "KB";
+                } else if (size < 1024LL * 1024LL * 1024LL) {
+                    size /= (1024LL * 1024LL);
+                    unit = "MB";
+                } else {
+                    size /= (1024LL * 1024LL * 1024LL);
+                    unit = "GB";
+                }
+
+                wprintw(info_win, " Size: %lld %s\n", size, unit);
+            }
+            wprintw(info_win, " Last Status Change:\n %s",
+                    ctime(&file_stats.st_ctime));
+            wprintw(info_win, " Last Access:\n %s",
+                    ctime(&file_stats.st_atime));
+            wprintw(info_win, " Last Modification:\n %s",
+                    ctime(&file_stats.st_mtime));
         } else {
             // Если возникла ошибка при получении информации о файле
             perror("Error getting file status");
         }
     } else {
-        wprintw(info_win, "Press Enter to go back\n");
+        if (strcmp(current_directory_->cwd, "/") == 0) {
+            wprintw(info_win, "Root directory\n");
+        } else {
+            wprintw(info_win, "Return to %s\n", current_directory_->parent_dir);
+        }
     }
+
+    // Обновляем окно info_win, чтобы отобразить все изменения
+    wrefresh(info_win);
+}
+/**
+ * @brief Выполняет операцию XOR между checked_value и gen_poly.
+ *
+ * Эта функция выполняет операцию XOR между элементами массивов `checked_value`
+ * и `gen_poly` для вычисления CRC (циклического избыточного кода). Каждый
+ * элемент `checked_value[j]` сравнивается с `gen_poly[j]`, и если они равны,
+ * результатом является символ '0', в противном случае — символ '1'.
+ *
+ * @note Функция предполагает, что массивы `checked_value` и `gen_poly`
+ * корректно инициализированы перед вызовом данной функции. Эта функция
+ * используется в процессе вычисления CRC.
+ */
+void XOR() {
+    for (int j = 1; j < N; j++) {
+        checked_value[j] = ((checked_value[j] == gen_poly[j]) ? '0' : '1');
+    }
+}
+
+/**
+ * @brief Функция для вычисления CRC и проверки суммы.
+ *
+ * Эта функция выполняет вычисление CRC (циклического избыточного кода) для
+ * файла, используя заданный генерирующий полином, и сравнивает результат с
+ * предоставленной суммой для проверки. Результат и статус скачивания выводятся
+ * в окно информации.
+ *
+ * @param files Массив строк с именами файлов для обработки.
+ */
+void crc(char* files[]) {
+    char selected_path[PATH_MAX];
+    // Формирование пути к выбранному файлу
+    snprintf(selected_path, PATH_MAX, "%s/%s", current_directory_->cwd,
+             files[selection]);
+    // Открытие файла для чтения
+    FILE* file = fopen(selected_path, "r");
+    if (file == NULL) {
+        // Вывод сообщения об ошибке в окно информации
+        wclear(info_win);
+        wrefresh(info_win);
+        wprintw(info_win, "Error opening file.\n");
+        wprintw(info_win, "Press Enter to return...\n");
+        wrefresh(info_win);
+        // Ожидание нажатия клавиши Enter или Return для возврата
+        char ch;
+        while ((ch = getch()) != KEY_ENTER && ch != '\n')
+            ;
+        return;
+    }
+    int i = 0, c;
+    // Ввод генерирующего полинома
+    wclear(info_win);
+    wmove(info_win, 1, 1);
+    wrefresh(path_win);
+    wprintw(info_win, "Enter the Generating polynomial: ");
+    wclear(path_win);
+    wmove(path_win, 1, 0);
+    wrefresh(info_win);
+    while ((c = wgetch(path_win)) != '\n') {
+        if (c == 127 || c == 8) {
+            gen_poly[--i] = '\0';
+        } else {
+            gen_poly[i++] = c;
+            gen_poly[i] = '\0';
+        }
+        wclear(path_win);
+        wmove(path_win, 1, 0);
+        wprintw(path_win, "%s", gen_poly);
+    }
+    wclear(info_win);
+    wprintw(info_win, "Enter the summary before downloading:");
+    wrefresh(info_win);
+
+    // Ввод суммы для проверки
+    i = 0;  // Сброс счетчика для нового ввода
+    wclear(path_win);
+    wrefresh(path_win);
+
+    while ((c = wgetch(path_win)) != '\n') {
+        if (c == 127 || c == 8) {
+            check_value[--i] = '\0';
+        } else {
+            check_value[i++] = c;
+            check_value[i] = '\0';
+        }
+        wclear(path_win);
+        wmove(path_win, 1, 0);
+        wprintw(path_win, "%s", check_value);
+        wrefresh(path_win);
+    }
+
+    int j;
+    char ch;
+
+    // Инициализация проверяемых данных N битами данных из файла
+    for (i = 0; i < N; i++) {
+        if ((ch = fgetc(file)) == EOF) {
+            break;
+        }
+        checked_value[i] = ch;
+    }
+    // Вычисление CRC и проверка суммы
+    do {
+        if (checked_value[0] == '1')
+            XOR();
+
+        for (j = 0; j < N - 1; j++)
+            checked_value[j] = checked_value[j + 1];
+
+        if ((ch = fgetc(file)) != EOF) {
+            checked_value[j] = ch;
+            i++;
+        }
+    } while (ch != EOF);
+
+    fclose(file);
+    wclear(info_win);
+    // Вывод результата CRC и проверка скачивания
+    wprintw(info_win, "CRC or Check value is: %s\n", checked_value);
+    if (strcmp(check_value, checked_value) == 0)
+        wprintw(info_win, "Data downloaded succesfully\n");
+    else
+        wprintw(info_win, "Data downloaded with mistakes\n");
+    wprintw(info_win, "Press Enter to return...\n");
+    wrefresh(info_win);
+    while ((ch = getch()) != KEY_ENTER && ch != '\n')
+        ;
 }
