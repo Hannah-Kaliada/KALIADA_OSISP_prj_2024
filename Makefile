@@ -4,10 +4,13 @@ LIBS += $(NCURSES_LIBS)
 CFLAGS += $(NCURSES_CFLAGS)
 SRCS = main.c
 OBJS = $(SRCS:.c=.o)
-all: fsm
-fsm: $(OBJS)
-	gcc $(CFLAGS) $(OBJS) -o fsm $(LIBS)
+TARGET = FSUtility
+all: $(TARGET)
+$(TARGET): $(OBJS)
+	gcc $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
 %.o: %.c
 	gcc $(CFLAGS) -c $< -o $@
 clean:
-	rm -f $(OBJS) fsm
+	rm -f $(OBJS) $(TARGET)
+run:
+	sudo ./$(TARGET)
