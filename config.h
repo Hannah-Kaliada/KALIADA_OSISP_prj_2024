@@ -15,6 +15,8 @@ typedef struct directory_ {
 
 #define KEY_NAVDOWN 'j'
 
+#undef KEY_ENTER
+
 #define KEY_ENTER 10
 
 #define KEY_RENAME 'r'
@@ -23,7 +25,15 @@ typedef struct directory_ {
 
 #define KEY_DELETE 'd'
 
+#undef KEY_MOVE
+
 #define KEY_MOVE 'm'
+
+#define KEY_СRC 'a'
+
+#define KEY_SORT 's'
+
+#define KEY_FIND 'f'
 
 #define isDir(mode) (S_ISDIR(mode))
 
