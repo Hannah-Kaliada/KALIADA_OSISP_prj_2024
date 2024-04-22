@@ -1,5 +1,5 @@
 <h1>File System Manager Utility</h1>
-<p>This is a command-line utility for managing files and directories.</p>
+<p>This is a command-line utility for managing files and directories in APFS.</p>
 <h2>Key Commands</h2>
 <ul>
   <li>
