@@ -46,7 +46,7 @@
 	</pre>
   <li>Navigate to the project directory:</li>
   <pre>
-		<code>cd repository</code>
+		<code>cd KALIADA_OSISP_prj_2024</code>
 	</pre>
   <li>Compile and run the program as described in the <strong>Compilation</strong> and <strong>Usage</strong> sections above. </li>
 </ol>
