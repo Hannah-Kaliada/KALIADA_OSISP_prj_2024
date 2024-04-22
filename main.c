@@ -14,130 +14,144 @@
 
 #include "config.h"
 
-#define N strlen(gen_poly)  // Длина генерирующего полинома
+#define N strlen (gen_poly) // Длина генерирующего полинома
 
 struct stat file_stats;
 WINDOW *current_win, *info_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
-directory_t* current_directory_ = NULL;
-char gen_poly[10];       // Генерирующий полином
-char check_value[28];    // Сумма для проверки CRC
-char checked_value[28];  // Проверяемые данные из файла
+directory_t *current_directory_ = NULL;
+char gen_poly[10];      // Генерирующий полином
+char check_value[28];   // Сумма для проверки CRC
+char checked_value[28]; // Проверяемые данные из файла
 
-void init_curses();
-void init();
-void init_windows();
-void refreshWindows();
-int get_number_of_files_in_directory(char* directory);
-int get_files(char* directory, char* target[]);
-void scroll_up();
-void scroll_down();
-void sort(char* files_[], int n);
-int check_text(char* path);
-void read_(char* path);
-void readInNano(char* path);
-void rename_file(char* files[]);
-void delete_(char* files[]);
-void delete_file(char* files[]);
-void copy_files(char* files[]);
-void move_file(char* files[]);
-void handle_enter(char* files[]);
-float get_recursive_size_directory(char* path);
-void show_file_info(char* files[]);
-char* get_parent_directory(char* cwd);
-void crc(char* files[]);
+void init_curses ();
+void init ();
+void init_windows ();
+void refreshWindows ();
+int get_number_of_files_in_directory (char *directory);
+int get_files (char *directory, char *target[]);
+void scroll_up ();
+void scroll_down ();
+void sort (char *files_[], int n);
+int check_text (char *path);
+void read_ (char *path);
+void readInNano (char *path);
+void rename_file (char *files[]);
+void delete_ (char *files[]);
+void delete_file (char *files[]);
+void copy_files (char *files[]);
+void move_file (char *files[]);
+void handle_enter (char *files[]);
+float get_recursive_size_directory (char *path);
+void show_file_info (char *files[]);
+char *get_parent_directory (char *cwd);
+void crc (char *files[]);
 
-int main() {
-    setlocale(LC_ALL, "ru_RU.UTF-8");
-    init();
-    init_curses();
-    strcat(current_directory_->cwd, "/");
-    current_directory_->parent_dir =
-        strdup(get_parent_directory(current_directory_->cwd));
+int
+main ()
+{
+    setlocale (LC_ALL, "ru_RU.UTF-8");
+    init ();
+    init_curses ();
+    strcat (current_directory_->cwd, "/");
+    current_directory_->parent_dir
+        = strdup (get_parent_directory (current_directory_->cwd));
     int ch;
 
-    do {
-        len = get_number_of_files_in_directory(current_directory_->cwd);
-        if (len < 0) {
-            perror("Error getting file count in directory");
-            break;
-        }
+    do
+        {
+            len = get_number_of_files_in_directory (current_directory_->cwd);
+            if (len < 0)
+                {
+                    perror ("Error getting file count in directory");
+                    break;
+                }
 
-        len = len <= 0 ? 1 : len;
-        char* files[len];
-        if (get_files(current_directory_->cwd, files) < 0) {
-            perror("Error getting files in directory");
-            break;
-        }
-        if (selection > len - 1) {
-            selection = len - 1;
-        }
+            len = len <= 0 ? 1 : len;
+            char *files[len];
+            if (get_files (current_directory_->cwd, files) < 0)
+                {
+                    perror ("Error getting files in directory");
+                    break;
+                }
+            if (selection > len - 1)
+                {
+                    selection = len - 1;
+                }
 
-        getmaxyx(stdscr, maxy, maxx);
-        maxy -= 2;
-        int t = 0;
-        init_windows();
+            getmaxyx (stdscr, maxy, maxx);
+            maxy -= 2;
+            int t = 0;
+            init_windows ();
 
-        for (int i = start; i < len; i++) {
-            if (t == maxy - 1)
-                break;
-            int size =
-                snprintf(NULL, 0, "%s%s", current_directory_->cwd, files[i]);
-            if (i == selection) {
-                wattron(current_win, A_STANDOUT);
-            } else {
-                wattroff(current_win, A_STANDOUT);
-            }
+            for (int i = start; i < len; i++)
+                {
+                    if (t == maxy - 1)
+                        break;
+                    int size = snprintf (NULL, 0, "%s%s",
+                                         current_directory_->cwd, files[i]);
+                    if (i == selection)
+                        {
+                            wattron (current_win, A_STANDOUT);
+                        }
+                    else
+                        {
+                            wattroff (current_win, A_STANDOUT);
+                        }
 
-            char* temp_dir = (char*)malloc(size + 1);
-            snprintf(temp_dir, size + 1, "%s%s", current_directory_->cwd,
-                     files[i]);
+                    char *temp_dir = (char *)malloc (size + 1);
+                    snprintf (temp_dir, size + 1, "%s%s",
+                              current_directory_->cwd, files[i]);
 
-            stat(temp_dir, &file_stats);
-            isDir(file_stats.st_mode) ? wattron(current_win, COLOR_PAIR(1))
-                                      : wattroff(current_win, COLOR_PAIR(2));
-            wmove(current_win, t + 1, 2);
-            wprintw(current_win, "%.*s\n", maxx, files[i]);
-            free(temp_dir);
-            t++;
+                    stat (temp_dir, &file_stats);
+                    isDir (file_stats.st_mode)
+                        ? wattron (current_win, COLOR_PAIR (1))
+                        : wattroff (current_win, COLOR_PAIR (2));
+                    wmove (current_win, t + 1, 2);
+                    wprintw (current_win, "%.*s\n", maxx, files[i]);
+                    free (temp_dir);
+                    t++;
+                }
+            wmove (path_win, 1, 0);
+            wprintw (path_win, " %s", current_directory_->cwd);
+            show_file_info (files);
+            refreshWindows ();
+
+            switch ((ch = wgetch (current_win)))
+                {
+                case KEY_UP:
+                case KEY_NAVUP:
+                    scroll_up ();
+                    break;
+                case KEY_DOWN:
+                case KEY_NAVDOWN:
+                    scroll_down ();
+                    break;
+                case KEY_ENTER:
+                    handle_enter (files);
+                    break;
+                case KEY_RENAME:
+                    rename_file (files);
+                    break;
+                case KEY_COPY:
+                    copy_files (files);
+                    break;
+                case KEY_MOVE:
+                    move_file (files);
+                    break;
+                case KEY_DELETE:
+                    delete_file (files);
+                    break;
+                case KEY_СRC:
+                    crc (files);
+                }
+            for (int i = 0; i < len; i++)
+                {
+                    free (files[i]);
+                }
         }
-        wmove(path_win, 1, 0);
-        wprintw(path_win, " %s", current_directory_->cwd);
-        show_file_info(files);
-        refreshWindows();
-
-        switch ((ch = wgetch(current_win))) {
-            case KEY_UP:
-            case KEY_NAVUP:
-                scroll_up();
-                break;
-            case KEY_DOWN:
-            case KEY_NAVDOWN:
-                scroll_down();
-                break;
-            case KEY_ENTER:
-                handle_enter(files);
-                break;
-            case KEY_RENAME:
-                rename_file(files);
-                break;
-            case KEY_COPY:
-                copy_files(files);
-                break;
-            case KEY_MOVE:
-                move_file(files);
-                break;
-            case KEY_DELETE:
-                delete_file(files);
-                break;
-            case 's':
-                crc(files);
-        }
-        for (int i = 0; i < len; i++) {
-            free(files[i]);
-        }
-    } while (ch != 'q');
-    endwin();
+    while (ch != 'q');
+    endwin ();
     return 0;
 }
 
@@ -145,14 +159,16 @@ int main() {
  * Инициализирует библиотеку ncurses для работы с графическим пользовательским
  * интерфейсом в терминале.
  */
-void init_curses() {
-    initscr();  // Инициализация экрана ncurses
-    noecho();  // Отключение отображения вводимых символов
-    curs_set(0);    // Скрытие курсора
-    start_color();  // Включение поддержки цветов
-    init_pair(1, DIR_COLOR, 0);  // Инициализация цвета для каталогов
-    init_pair(3, STATUS_SELECTED_COLOR,
-              0);  // Инициализация цвета для выделенного элемента статуса
+void
+init_curses ()
+{
+    initscr (); // Инициализация экрана ncurses
+    noecho (); // Отключение отображения вводимых символов
+    curs_set (0);   // Скрытие курсора
+    start_color (); // Включение поддержки цветов
+    init_pair (1, DIR_COLOR, 0); // Инициализация цвета для каталогов
+    init_pair (3, STATUS_SELECTED_COLOR,
+               0); // Инициализация цвета для выделенного элемента статуса
 }
 
 /**
@@ -160,13 +176,16 @@ void init_curses() {
  * информации о текущем каталоге. Если выделение памяти не удалось, функция
  * выводит сообщение об ошибке и завершает программу.
  */
-void init() {
-    current_directory_ = (directory_t*)malloc(
-        sizeof(directory_t));  // Выделение памяти под структуру directory_t
-    if (current_directory_ == NULL) {
-        printf("Error Occurred. Memory allocation failed.\n");
-        exit(1);  // Выход из программы с кодом ошибки
-    }
+void
+init ()
+{
+    current_directory_ = (directory_t *)malloc (
+        sizeof (directory_t)); // Выделение памяти под структуру directory_t
+    if (current_directory_ == NULL)
+        {
+            printf ("Error Occurred. Memory allocation failed.\n");
+            exit (1); // Выход из программы с кодом ошибки
+        }
 }
 
 /**
@@ -178,22 +197,24 @@ void init() {
  * Устанавливает клавиатурный режим для `current_win`, чтобы обрабатывать
  * специальные клавиши.
  */
-void init_windows() {
+void
+init_windows ()
+{
     // Создание окон с помощью функции newwin()
-    current_win = newwin(maxy, maxx / 2, 0,
-                         0);  // Окно для списка файлов (левая часть экрана)
-    path_win =
-        newwin(2, maxx, maxy,
-               0);  // Окно для отображения текущего пути (нижняя часть экрана)
-    info_win = newwin(maxy, maxx / 2, 0,
-                      maxx / 2);  // Окно для отображения информации о выбранном
+    current_win = newwin (maxy, maxx / 2, 0,
+                          0); // Окно для списка файлов (левая часть экрана)
+    path_win = newwin (
+        2, maxx, maxy,
+        0); // Окно для отображения текущего пути (нижняя часть экрана)
+    info_win = newwin (maxy, maxx / 2, 0,
+                       maxx / 2); // Окно для отображения информации о выбранном
     // файле (правая часть экрана)
 
     // Обновление экрана с помощью функции refresh()
-    refresh();  // Обновление стандартного экрана (stdscr)
+    refresh (); // Обновление стандартного экрана (stdscr)
 
     // Установка режима обработки клавиш для окна current_win
-    keypad(current_win, TRUE);  // Разрешает обработку специальных клавиш
+    keypad (current_win, TRUE); // Разрешает обработку специальных клавиш
     // (например, стрелок) в current_win
 }
 
@@ -202,17 +223,19 @@ void init_windows() {
  * окон. Рамки вокруг окон создаются с использованием функции box(). После этого
  * происходит обновление каждого окна с помощью функции wrefresh().
  */
-void refreshWindows() {
+void
+refreshWindows ()
+{
     // Рисует рамку вокруг окна current_win с символами '|' (вертикальная линия)
     // и '-' (горизонтальная линия)
-    box(current_win, '|', '-');
+    box (current_win, '|', '-');
     // Рисует рамку вокруг окна info_win с символами '|' и '-'
-    box(info_win, '|', '-');
+    box (info_win, '|', '-');
 
     // Обновляет содержимое окон с помощью функции wrefresh()
-    wrefresh(current_win);  // Обновляет окно current_win
-    wrefresh(path_win);     // Обновляет окно path_win
-    wrefresh(info_win);     // Обновляет окно info_win
+    wrefresh (current_win); // Обновляет окно current_win
+    wrefresh (path_win);    // Обновляет окно path_win
+    wrefresh (info_win);    // Обновляет окно info_win
 }
 
 /**
@@ -221,22 +244,27 @@ void refreshWindows() {
  * @param directory Путь к каталогу, для которого нужно подсчитать файлы.
  * @return Возвращает количество файлов в каталоге или -1 в случае ошибки.
  */
-int get_number_of_files_in_directory(char* directory) {
+int
+get_number_of_files_in_directory (char *directory)
+{
     int len = 0;
-    DIR* dir_;
-    struct dirent* dir_entry;
+    DIR *dir_;
+    struct dirent *dir_entry;
 
-    dir_ = opendir(directory);
-    if (dir_ == NULL) {
-        return -1;
-    }
-
-    while ((dir_entry = readdir(dir_)) != NULL) {
-        if (strcmp(dir_entry->d_name, ".") != 0) {
-            len++;
+    dir_ = opendir (directory);
+    if (dir_ == NULL)
+        {
+            return -1;
         }
-    }
-    closedir(dir_);
+
+    while ((dir_entry = readdir (dir_)) != NULL)
+        {
+            if (strcmp (dir_entry->d_name, ".") != 0)
+                {
+                    len++;
+                }
+        }
+    closedir (dir_);
     return len;
 }
 
@@ -249,22 +277,27 @@ int get_number_of_files_in_directory(char* directory) {
  * @return Возвращает 1 в случае успешного получения имен файлов или -1 в случае
  * ошибки.
  */
-int get_files(char* directory, char* target[]) {
+int
+get_files (char *directory, char *target[])
+{
     int i = 0;
-    DIR* dir_;
-    struct dirent* dir_entry;
+    DIR *dir_;
+    struct dirent *dir_entry;
 
-    dir_ = opendir(directory);
-    if (dir_ == NULL) {
-        return -1;
-    }
-
-    while ((dir_entry = readdir(dir_)) != NULL) {
-        if (strcmp(dir_entry->d_name, ".") != 0) {
-            target[i++] = strdup(dir_entry->d_name);
+    dir_ = opendir (directory);
+    if (dir_ == NULL)
+        {
+            return -1;
         }
-    }
-    closedir(dir_);
+
+    while ((dir_entry = readdir (dir_)) != NULL)
+        {
+            if (strcmp (dir_entry->d_name, ".") != 0)
+                {
+                    target[i++] = strdup (dir_entry->d_name);
+                }
+        }
+    closedir (dir_);
     return 1;
 }
 
@@ -279,30 +312,40 @@ int get_files(char* directory, char* target[]) {
  * содержимое. В противном случае `start` уменьшается на 1, и окно `current_win`
  * очищается для обновления содержимого.
  */
-void scroll_up() {
-    selection--;  // Уменьшаем индекс выбора на один
+void
+scroll_up ()
+{
+    selection--; // Уменьшаем индекс выбора на один
     selection = (selection < 0)
                     ? 0
-                    : selection;  // Если индекс выбора стал отрицательным,
+                    : selection; // Если индекс выбора стал отрицательным,
     // устанавливаем его в 0
 
     // Проверяем, достаточно ли много файлов для прокрутки
-    if (len >= maxy - 1) {
-        // Проверяем, если текущий выбор находится в верхней половине
-        // отображаемой области
-        if (selection <= start + maxy / 2) {
-            // Если начальная позиция (start) уже равна 0, очищаем окно
-            // current_win
-            if (start == 0) {
-                wclear(current_win);  // Очищаем окно current_win (удаляем
-                // старое содержимое)
-            } else {
-                start--;  // Уменьшаем начальную позицию (сдвигаем список вверх)
-                wclear(current_win);  // Очищаем окно current_win для обновления
-                // содержимого
-            }
+    if (len >= maxy - 1)
+        {
+            // Проверяем, если текущий выбор находится в верхней половине
+            // отображаемой области
+            if (selection <= start + maxy / 2)
+                {
+                    // Если начальная позиция (start) уже равна 0, очищаем окно
+                    // current_win
+                    if (start == 0)
+                        {
+                            wclear (current_win); // Очищаем окно current_win
+                                                  // (удаляем
+                            // старое содержимое)
+                        }
+                    else
+                        {
+                            start--; // Уменьшаем начальную позицию (сдвигаем
+                                     // список вверх)
+                            wclear (current_win); // Очищаем окно current_win
+                                                  // для обновления
+                            // содержимого
+                        }
+                }
         }
-    }
 }
 
 /**
@@ -317,27 +360,34 @@ void scroll_up() {
  * достигла конца списка, окно `current_win` очищается для обновления
  * содержимого.
  */
-void scroll_down() {
-    selection++;  // Увеличиваем индекс выбора на один
+void
+scroll_down ()
+{
+    selection++; // Увеличиваем индекс выбора на один
     selection = (selection > len - 1)
                     ? len - 1
-                    : selection;  // Проверяем, не превысил ли индекс выбора
+                    : selection; // Проверяем, не превысил ли индекс выбора
     // количество файлов - 1
 
     // Проверяем, достаточно ли много файлов для прокрутки
-    if (len >= maxy - 1) {
-        // Проверяем, если текущий выбор находится в нижней половине
-        // отображаемой области
-        if (selection - 1 > maxy / 2) {
-            // Проверяем, достигла ли начальная позиция конца списка
-            if (start + maxy - 2 != len) {
-                start++;  // Увеличиваем начальную позицию (сдвигаем список
-                // вниз)
-                wclear(current_win);  // Очищаем окно current_win для обновления
-                // содержимого
-            }
+    if (len >= maxy - 1)
+        {
+            // Проверяем, если текущий выбор находится в нижней половине
+            // отображаемой области
+            if (selection - 1 > maxy / 2)
+                {
+                    // Проверяем, достигла ли начальная позиция конца списка
+                    if (start + maxy - 2 != len)
+                        {
+                            start++; // Увеличиваем начальную позицию (сдвигаем
+                                     // список
+                            // вниз)
+                            wclear (current_win); // Очищаем окно current_win
+                                                  // для обновления
+                            // содержимого
+                        }
+                }
         }
-    }
 }
 
 /**
@@ -347,24 +397,32 @@ void scroll_down() {
  * отсортировать.
  * @param n Количество элементов в массиве `files_`.
  */
-void sort(char* files_[], int n) {
-    char temp[1000];  // Временный буфер для обмена значениями
+void
+sort (char *files_[], int n)
+{
+    char temp[1000]; // Временный буфер для обмена значениями
 
     // Перебор всех элементов массива для сортировки
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            // Сравниваем имена файлов и меняем их местами, если необходимо
-            if (strcmp(files_[i], files_[j]) > 0) {
-                strcpy(
-                    temp,
-                    files_[i]);  // Копируем текущий элемент во временный буфер
-                strcpy(files_[i],
-                       files_[j]);  // Заменяем текущий элемент на следующий
-                strcpy(files_[j], temp);  // Заменяем следующий элемент на
-                // текущий из временного буфера
-            }
+    for (int i = 0; i < n - 1; i++)
+        {
+            for (int j = i + 1; j < n; j++)
+                {
+                    // Сравниваем имена файлов и меняем их местами, если
+                    // необходимо
+                    if (strcmp (files_[i], files_[j]) > 0)
+                        {
+                            strcpy (temp,
+                                    files_[i]); // Копируем текущий элемент во
+                                                // временный буфер
+                            strcpy (files_[i],
+                                    files_[j]); // Заменяем текущий элемент на
+                                                // следующий
+                            strcpy (files_[j],
+                                    temp); // Заменяем следующий элемент на
+                            // текущий из временного буфера
+                        }
+                }
         }
-    }
 }
 
 /**
@@ -373,143 +431,179 @@ void sort(char* files_[], int n) {
  * @return Возвращает 1, если файл содержит только печатаемые символы ASCII (от
  * 0x20 до 0x7E), иначе возвращает 0.
  */
-int check_text(char* path) {
-    FILE* ptr;
-    ptr = fopen(path, "r");  // Открываем файл для чтения
-    if (ptr == NULL) {
-        perror("Error opening file");  // Выводим сообщение об ошибке, если не
-        // удалось открыть файл
-        return 0;  // Возвращаем 0, чтобы указать на ошибку
-    }
+int
+check_text (char *path)
+{
+    FILE *ptr;
+    ptr = fopen (path, "r"); // Открываем файл для чтения
+    if (ptr == NULL)
+        {
+            perror (
+                "Error opening file"); // Выводим сообщение об ошибке, если не
+            // удалось открыть файл
+            return 0; // Возвращаем 0, чтобы указать на ошибку
+        }
 
     int c;
-    while (
-        (c = fgetc(ptr)) !=
-        EOF) {  // Читаем файл посимвольно, пока не достигнем конца файла (EOF)
-        if (c < 0 || c > 127) {  // Проверяем, является ли символ непечатаемым
-            // (вне диапазона ASCII)
-            fclose(ptr);  // Закрываем файл
-            return 0;  // Возвращаем 0, чтобы указать на наличие непечатаемого
-            // символа
+    while ((c = fgetc (ptr)) != EOF)
+        { // Читаем файл посимвольно, пока не достигнем конца файла (EOF)
+            if (c < 0 || c > 127)
+                { // Проверяем, является ли символ непечатаемым
+                    // (вне диапазона ASCII)
+                    fclose (ptr); // Закрываем файл
+                    return 0; // Возвращаем 0, чтобы указать на наличие
+                              // непечатаемого
+                    // символа
+                }
         }
-    }
 
-    fclose(ptr);  // Закрываем файл после окончания чтения
-    return 1;  // Возвращаем 1, если файл содержит только печатаемые символы
+    fclose (ptr); // Закрываем файл после окончания чтения
+    return 1; // Возвращаем 1, если файл содержит только печатаемые символы
 }
 
 /**
  * Читает содержимое файла и выводит его на экран в окне ncurses.
  * @param path Путь к файлу, который нужно прочитать.
  */
-void read_(char* path) {
-    char buffer[256];  // Буфер для чтения данных из файла
-    int ch;  // Переменная для хранения нажатой клавиши
-    wclear(current_win);  // Очищаем текущее окно ncurses
-    wclear(info_win);  // Очищаем информационное окно ncurses
-    wresize(current_win, maxy,
-            maxx);  // Изменяем размер текущего окна до максимального
+void
+read_ (char *path)
+{
+    char buffer[256]; // Буфер для чтения данных из файла
+    int ch; // Переменная для хранения нажатой клавиши
+    wclear (current_win); // Очищаем текущее окно ncurses
+    wclear (info_win); // Очищаем информационное окно ncurses
+    wresize (current_win, maxy,
+             maxx); // Изменяем размер текущего окна до максимального
 
-    FILE* ptr;
-    ptr = fopen(path, "rb");  // Открываем файл для чтения в бинарном режиме
-    if (ptr == NULL) {
-        perror("Error");  // Выводим сообщение об ошибке, если не удалось
-        // открыть файл
-        return;
-    }
+    FILE *ptr;
+    ptr = fopen (path, "rb"); // Открываем файл для чтения в бинарном режиме
+    if (ptr == NULL)
+        {
+            perror ("Error"); // Выводим сообщение об ошибке, если не удалось
+            // открыть файл
+            return;
+        }
 
     int t = 2, pos = 0, count;
-    int is_text = check_text(path);  // Проверяем, является ли файл текстовым
+    int is_text = check_text (path); // Проверяем, является ли файл текстовым
 
-    do {
-        wmove(current_win, 1, 2);
-        wprintw(current_win, "Press \"q\" to Exit");
+    do
+        {
+            wmove (current_win, 1, 2);
+            wprintw (current_win, "Press \"q\" to Exit");
 
-        if (is_text) {
-            count = 0;
-            while (
-                fgets(buffer, sizeof(buffer), ptr)) {  // Читаем файл построчно
-                if (count < pos) {
-                    count++;
-                    continue;
+            if (is_text)
+                {
+                    count = 0;
+                    while (fgets (buffer, sizeof (buffer), ptr))
+                        { // Читаем файл построчно
+                            if (count < pos)
+                                {
+                                    count++;
+                                    continue;
+                                }
+                            wmove (current_win, ++t,
+                                   1); // Перемещаем курсор в следующую строку
+                            wprintw (current_win, "%.*s", maxx - 2,
+                                     buffer); // Выводим содержимое строки
+                        }
                 }
-                wmove(current_win, ++t,
-                      1);  // Перемещаем курсор в следующую строку
-                wprintw(current_win, "%.*s", maxx - 2,
-                        buffer);  // Выводим содержимое строки
-            }
-        } else {
-            fseek(ptr, pos * (maxx - 2),
-                  SEEK_SET);  // Перемещаем указатель в нужное место файла
-            size_t bytesRead = fread(buffer, sizeof(unsigned char), maxx - 2,
-                                     ptr);  // Читаем данные из файла
-            if (bytesRead > 0) {
-                wmove(current_win, ++t,
-                      1);  // Перемещаем курсор в следующую строку
-                wprintw(current_win, "%.*s", bytesRead,
-                        buffer);  // Выводим прочитанные данные
-            }
+            else
+                {
+                    fseek (
+                        ptr, pos * (maxx - 2),
+                        SEEK_SET); // Перемещаем указатель в нужное место файла
+                    size_t bytesRead
+                        = fread (buffer, sizeof (unsigned char), maxx - 2,
+                                 ptr); // Читаем данные из файла
+                    if (bytesRead > 0)
+                        {
+                            wmove (current_win, ++t,
+                                   1); // Перемещаем курсор в следующую строку
+                            wprintw (current_win, "%.*s", bytesRead,
+                                     buffer); // Выводим прочитанные данные
+                        }
+                }
+
+            box (current_win, '|',
+                 '-'); // Отображаем рамку вокруг текущего окна
+            wrefresh (current_win); // Обновляем текущее окно ncurses
+            ch = wgetch (current_win); // Получаем нажатую клавишу
+            wclear (current_win); // Очищаем текущее окно перед обновлением
+
+            switch (ch)
+                {
+                case KEY_UP:
+                    pos = pos == 0 ? 0 : pos - 1; // Перемещаемся вверх по файлу
+                    // (уменьшаем позицию)
+                    break;
+                case KEY_DOWN:
+                    pos++; // Перемещаемся вниз по файлу (увеличиваем позицию)
+                    break;
+                }
         }
+    while (ch != 'q'); // Выполняем цикл, пока не нажата клавиша "e" или "E"
 
-        box(current_win, '|', '-');  // Отображаем рамку вокруг текущего окна
-        wrefresh(current_win);  // Обновляем текущее окно ncurses
-        ch = wgetch(current_win);  // Получаем нажатую клавишу
-        wclear(current_win);  // Очищаем текущее окно перед обновлением
-
-        switch (ch) {
-            case KEY_UP:
-                pos = pos == 0 ? 0 : pos - 1;  // Перемещаемся вверх по файлу
-                // (уменьшаем позицию)
-                break;
-            case KEY_DOWN:
-                pos++;  // Перемещаемся вниз по файлу (увеличиваем позицию)
-                break;
-        }
-    } while (ch != 'q');  // Выполняем цикл, пока не нажата клавиша "e" или "E"
-
-    fclose(ptr);  // Закрываем файл после окончания чтения
-    endwin();  // Завершаем работу с библиотекой ncurses
+    fclose (ptr); // Закрываем файл после окончания чтения
+    endwin (); // Завершаем работу с библиотекой ncurses
 }
 
 /**
  * Открывает указанный файл в текстовом редакторе nano для редактирования.
  * @param path Путь к файлу, который нужно открыть.
  */
-void readInNano(char* path) {
+void
+readInNano (char *path)
+{
     struct termios original_termios;
-    tcgetattr(STDIN_FILENO,
-              &original_termios);  // Получаем текущие настройки терминала
+    tcgetattr (STDIN_FILENO,
+               &original_termios); // Получаем текущие настройки терминала
 
-    pid_t pid = fork();  // Создаем новый процесс с помощью fork()
+    pid_t pid = fork (); // Создаем новый процесс с помощью fork()
 
-    if (pid == 0) {  // Дочерний процесс
-        execlp("nano", "nano", path,
-               NULL);  // Запускаем программу nano для открытия файла
-        perror("exec");  // В случае ошибки выполнения exec выводим сообщение об
-        // ошибке
-        exit(EXIT_FAILURE);  // Завершаем дочерний процесс с ошибкой
-    } else if (pid < 0) {  // Ошибка при вызове fork()
-        perror("fork");  // Выводим сообщение об ошибке
-    } else {             // Родительский процесс
-        int status;
-        pid_t wpid =
-            waitpid(pid, &status, 0);  // Ждем завершения дочернего процесса
-
-        if (wpid == -1) {  // Ошибка при ожидании дочернего процесса
-            perror("waitpid");  // Выводим сообщение об ошибке
-        } else {
-            if (WIFEXITED(status)) {  // Проверяем, завершился ли дочерний
-                // процесс нормально
-                tcsetattr(
-                    STDIN_FILENO, TCSANOW,
-                    &original_termios);  // Восстанавливаем настройки терминала
-            } else if (WIFSIGNALED(status)) {  // Проверяем, завершился ли
-                // дочерний процесс из-за сигнала
-                printf("nano editor terminated by signal: %d\n",
-                       WTERMSIG(status));  // Выводим информацию о сигнале
-            }
+    if (pid == 0)
+        { // Дочерний процесс
+            execlp ("nano", "nano", path,
+                    NULL); // Запускаем программу nano для открытия файла
+            perror (
+                "exec"); // В случае ошибки выполнения exec выводим сообщение об
+            // ошибке
+            exit (EXIT_FAILURE); // Завершаем дочерний процесс с ошибкой
         }
-    }
+    else if (pid < 0)
+        {                    // Ошибка при вызове fork()
+            perror ("fork"); // Выводим сообщение об ошибке
+        }
+    else
+        { // Родительский процесс
+            int status;
+            pid_t wpid = waitpid (pid, &status,
+                                  0); // Ждем завершения дочернего процесса
+
+            if (wpid == -1)
+                { // Ошибка при ожидании дочернего процесса
+                    perror ("waitpid"); // Выводим сообщение об ошибке
+                }
+            else
+                {
+                    if (WIFEXITED (status))
+                        { // Проверяем, завершился ли дочерний
+                            // процесс нормально
+                            tcsetattr (
+                                STDIN_FILENO, TCSANOW,
+                                &original_termios); // Восстанавливаем настройки
+                                                    // терминала
+                        }
+                    else if (WIFSIGNALED (status))
+                        { // Проверяем, завершился ли
+                            // дочерний процесс из-за сигнала
+                            printf (
+                                "nano editor terminated by signal: %d\n",
+                                WTERMSIG (
+                                    status)); // Выводим информацию о сигнале
+                        }
+                }
+        }
 }
 
 /**
@@ -519,50 +613,57 @@ void readInNano(char* path) {
  * переименование.
  * @param files Массив строк с именами файлов.
  */
-void rename_file(char* files[]) {
+void
+rename_file (char *files[])
+{
     char new_name[100];
     int i = 0, c;
 
     // Очистка окна path_win и установка курсора для ввода нового имени файла
-    wclear(path_win);
-    wmove(path_win, 1, 0);
+    wclear (path_win);
+    wmove (path_win, 1, 0);
 
     // Чтение нового имени файла с клавиатуры
-    while ((c = wgetch(path_win)) != '\n') {
-        if (c == 127 || c == 8) {
-            // Обработка удаления символа (Backspace)
-            new_name[--i] = '\0';
-        } else {
-            // Добавление введенного символа к новому имени файла
-            new_name[i++] = c;
-            new_name[i] = '\0';
+    while ((c = wgetch (path_win)) != '\n')
+        {
+            if (c == 127 || c == 8)
+                {
+                    // Обработка удаления символа (Backspace)
+                    new_name[--i] = '\0';
+                }
+            else
+                {
+                    // Добавление введенного символа к новому имени файла
+                    new_name[i++] = c;
+                    new_name[i] = '\0';
+                }
+            wclear (path_win);
+            wmove (path_win, 1, 0);
+            wprintw (path_win, "%s", new_name);
         }
-        wclear(path_win);
-        wmove(path_win, 1, 0);
-        wprintw(path_win, "%s", new_name);
-    }
 
     c = ' ';
 
 LOOP:
     // Очистка окна path_win и вывод нового имени файла с запросом подтверждения
-    wclear(path_win);
-    wmove(path_win, 1, 0);
-    wprintw(path_win, "%s (y/n) %c", new_name, c);
-    c = wgetch(path_win);
+    wclear (path_win);
+    wmove (path_win, 1, 0);
+    wprintw (path_win, "%s (y/n) %c", new_name, c);
+    c = wgetch (path_win);
 
     char *a, *b;
-    switch (c) {
+    switch (c)
+        {
         case 'y':
         case 'Y':
             // Формирование полного пути и переименование файла
-            a = strdup(current_directory_->cwd);
-            b = strdup(current_directory_->cwd);
-            strcat(a, files[selection]);
-            strcat(b, new_name);
-            rename(a, b);  // Переименование файла
-            free(a);
-            free(b);
+            a = strdup (current_directory_->cwd);
+            b = strdup (current_directory_->cwd);
+            strcat (a, files[selection]);
+            strcat (b, new_name);
+            rename (a, b); // Переименование файла
+            free (a);
+            free (b);
             break;
         case 'n':
         case 'N':
@@ -572,7 +673,7 @@ LOOP:
             // Обработка некорректного ввода (повторный ввод подтверждения)
             goto LOOP;
             break;
-    }
+        }
 }
 
 /**
@@ -582,16 +683,18 @@ LOOP:
  *         Память для возвращаемой строки выделяется динамически и должна быть
  * освобождена вызывающей стороной.
  */
-char* get_parent_directory(char* cwd) {
-    char* a;
-    a = strdup(cwd);  // Создание копии текущего рабочего каталога
-    int i = (int)(strlen(a) - 1);
+char *
+get_parent_directory (char *cwd)
+{
+    char *a;
+    a = strdup (cwd); // Создание копии текущего рабочего каталога
+    int i = (int)(strlen (a) - 1);
 
     // Поиск последнего символа '/' в пути
     while (a[--i] != '/')
         ;
 
-    a[++i] = '\0';  // Установка завершающего нуля для формирования строки
+    a[++i] = '\0'; // Установка завершающего нуля для формирования строки
     // родительского каталога
     return a;
 }
@@ -601,15 +704,17 @@ char* get_parent_directory(char* cwd) {
  * @param files Массив строк, содержащий имена файлов.
  *              files[selection] представляет выбранный файл для удаления.
  */
-void delete_(char* files[]) {
+void
+delete_ (char *files[])
+{
     char curr_path[1000];
 
     // Формируем полный путь к файлу для удаления
-    snprintf(curr_path, sizeof(curr_path), "%s%s", current_directory_->cwd,
-             files[selection]);
+    snprintf (curr_path, sizeof (curr_path), "%s%s", current_directory_->cwd,
+              files[selection]);
 
     // Удаляем файл с указанным путем
-    remove(curr_path);
+    remove (curr_path);
 }
 
 /**
@@ -617,35 +722,38 @@ void delete_(char* files[]) {
  * @param files Массив строк, содержащий имена файлов.
  *              files[selection] представляет выбранный файл для удаления.
  */
-void delete_file(char* files[]) {
+void
+delete_file (char *files[])
+{
     int c;
 
     // Очищаем окно path_win и выводим запрос на подтверждение удаления
-    wclear(path_win);
-    wmove(path_win, 1, 0);
-    wprintw(path_win, "Are you sure to delete? (y/n)");
+    wclear (path_win);
+    wmove (path_win, 1, 0);
+    wprintw (path_win, "Are you sure to delete? (y/n)");
 
 LOOP_:
     // Получаем ответ пользователя
-    c = wgetch(path_win);
+    c = wgetch (path_win);
 
     // Очищаем окно path_win и выводим запрос с ответом пользователя
-    wclear(path_win);
-    wmove(path_win, 1, 0);
-    wprintw(path_win, "Are you sure to delete? (y/n) %c", c);
+    wclear (path_win);
+    wmove (path_win, 1, 0);
+    wprintw (path_win, "Are you sure to delete? (y/n) %c", c);
 
-    switch (c) {
+    switch (c)
+        {
         case 'y':
         case 'Y':
-            delete_(files);  // Вызываем функцию delete_ для удаления файла
+            delete_ (files); // Вызываем функцию delete_ для удаления файла
             break;
         case 'n':
         case 'N':
-            break;  // Ничего не делаем, пользователь отказался от удаления
+            break; // Ничего не делаем, пользователь отказался от удаления
         default:
-            goto LOOP_;  // Повторяем цикл, если введенный символ некорректен
+            goto LOOP_; // Повторяем цикл, если введенный символ некорректен
             break;
-    }
+        }
 }
 
 /**
@@ -653,66 +761,75 @@ LOOP_:
  * @param files Массив строк, содержащий имена файлов.
  *              files[selection] представляет выбранный файл для копирования.
  */
-void copy_files(char* files[]) {
+void
+copy_files (char *files[])
+{
     char new_path[1000];
     int i = 0, c;
 
     // Очищаем окно path_win и запрашиваем новый путь у пользователя
-    wclear(path_win);
-    wmove(path_win, 1, 0);
-    while ((c = wgetch(path_win)) != '\n') {
-        if (c == 127 || c == 8) {
-            new_path[--i] = '\0';
-            i = i < 0 ? 0 : i;
-        } else {
-            new_path[i++] = c;
-            new_path[i] = '\0';
+    wclear (path_win);
+    wmove (path_win, 1, 0);
+    while ((c = wgetch (path_win)) != '\n')
+        {
+            if (c == 127 || c == 8)
+                {
+                    new_path[--i] = '\0';
+                    i = i < 0 ? 0 : i;
+                }
+            else
+                {
+                    new_path[i++] = c;
+                    new_path[i] = '\0';
+                }
+            wclear (path_win);
+            wmove (path_win, 1, 0);
+            wprintw (path_win, "%s", new_path);
         }
-        wclear(path_win);
-        wmove(path_win, 1, 0);
-        wprintw(path_win, "%s", new_path);
-    }
 
     // Формируем полный путь до нового каталога/файла
     char target_path[1000];
-    snprintf(target_path, sizeof(target_path), "%s/%s", new_path,
-             files[selection]);
+    snprintf (target_path, sizeof (target_path), "%s/%s", new_path,
+              files[selection]);
 
     // Открываем старый файл для чтения и новый файл для записи
     FILE *old_file, *new_file;
     char curr_path[1000];
-    snprintf(curr_path, sizeof(curr_path), "%s/%s", current_directory_->cwd,
-             files[selection]);
+    snprintf (curr_path, sizeof (curr_path), "%s/%s", current_directory_->cwd,
+              files[selection]);
 
-    old_file = fopen(curr_path, "rb");
-    if (old_file == NULL) {
-        perror("Error opening source file");
-        return;
-    }
+    old_file = fopen (curr_path, "rb");
+    if (old_file == NULL)
+        {
+            perror ("Error opening source file");
+            return;
+        }
 
-    new_file = fopen(target_path, "wb");
-    if (new_file == NULL) {
-        perror("Error opening destination file");
-        fclose(old_file);
-        return;
-    }
+    new_file = fopen (target_path, "wb");
+    if (new_file == NULL)
+        {
+            perror ("Error opening destination file");
+            fclose (old_file);
+            return;
+        }
 
     // Копируем содержимое старого файла в новый файл
     int ch;
-    while ((ch = fgetc(old_file)) != EOF) {
-        fputc(ch, new_file);
-    }
+    while ((ch = fgetc (old_file)) != EOF)
+        {
+            fputc (ch, new_file);
+        }
 
     // Закрываем файлы
-    fclose(old_file);
-    fclose(new_file);
+    fclose (old_file);
+    fclose (new_file);
 
     // Очищаем окно current_win и выводим информацию об успешном копировании
-    wclear(current_win);
-    wmove(current_win, 10, 10);
-    wprintw(current_win, "File copied successfully from\n%s\nto\n%s\n",
-            curr_path, target_path);
-    wrefresh(current_win);
+    wclear (current_win);
+    wmove (current_win, 10, 10);
+    wprintw (current_win, "File copied successfully from\n%s\nto\n%s\n",
+             curr_path, target_path);
+    wrefresh (current_win);
 }
 
 /**
@@ -722,12 +839,14 @@ void copy_files(char* files[]) {
  * @param files Массив строк, содержащий имена файлов.
  *              files[selection] представляет выбранный файл для перемещения.
  */
-void move_file(char* files[]) {
+void
+move_file (char *files[])
+{
     // Копируем выбранный файл в новый путь
-    copy_files(files);
+    copy_files (files);
 
     // Удаляем оригинал файла
-    delete_(files);
+    delete_ (files);
 }
 /**
  * Обрабатывает нажатие клавиши Enter для выбора действия в текущем каталоге.
@@ -736,59 +855,70 @@ void move_file(char* files[]) {
  * @param files Массив строк, содержащий имена файлов и подкаталогов текущего
  * каталога. files[selection] представляет выбранный элемент для обработки.
  */
-void handle_enter(char* files[]) {
+void
+handle_enter (char *files[])
+{
     char selected_path[PATH_MAX];
-    char* original_cwd = strdup(current_directory_->cwd);
+    char *original_cwd = strdup (current_directory_->cwd);
 
     // Закрываем ncurses окно перед обработкой нажатия Enter
-    endwin();
+    endwin ();
 
     // Формируем полный путь к выбранному файлу или каталогу
-    snprintf(selected_path, PATH_MAX, "%s/%s", current_directory_->cwd,
-             files[selection]);
+    snprintf (selected_path, PATH_MAX, "%s/%s", current_directory_->cwd,
+              files[selection]);
 
     struct stat file_stats;
 
-    if (strcmp(files[selection], "..") == 0) {
-        // Переход на уровень выше (если выбран "..")
-        start = 0;
-        selection = 0;
-        strcpy(current_directory_->cwd, current_directory_->parent_dir);
-        free(current_directory_->parent_dir);
-        current_directory_->parent_dir =
-            strdup(get_parent_directory(current_directory_->cwd));
-    } else {
-        // Переход в выбранный каталог или открытие выбранного файла
-        strcat(current_directory_->cwd, files[selection]);
-        if (stat(selected_path, &file_stats) == -1) {
-            perror("Error getting file status");
-            free(original_cwd);
-            return;
-        }
-
-        if (S_ISDIR(file_stats.st_mode)) {
-            // Если выбран каталог, переходим в него
+    if (strcmp (files[selection], "..") == 0)
+        {
+            // Переход на уровень выше (если выбран "..")
             start = 0;
             selection = 0;
-            free(current_directory_->parent_dir);
-            current_directory_->parent_dir = strdup(original_cwd);
-            strcat(current_directory_->cwd, "/");
-        } else {
-            // Если выбран файл, открываем его для чтения
-            read_(selected_path);
-
-            // Добавляем "/" к текущему каталогу, если это необходимо
-            size_t original_len = strlen(original_cwd);
-            if (original_len > 0 && original_cwd[original_len - 1] != '/') {
-                strcat(current_directory_->cwd, "/");
-            }
-            strcpy(current_directory_->cwd, original_cwd);
+            strcpy (current_directory_->cwd, current_directory_->parent_dir);
+            free (current_directory_->parent_dir);
+            current_directory_->parent_dir
+                = strdup (get_parent_directory (current_directory_->cwd));
         }
-    }
+    else
+        {
+            // Переход в выбранный каталог или открытие выбранного файла
+            strcat (current_directory_->cwd, files[selection]);
+            if (stat (selected_path, &file_stats) == -1)
+                {
+                    perror ("Error getting file status");
+                    free (original_cwd);
+                    return;
+                }
+
+            if (S_ISDIR (file_stats.st_mode))
+                {
+                    // Если выбран каталог, переходим в него
+                    start = 0;
+                    selection = 0;
+                    free (current_directory_->parent_dir);
+                    current_directory_->parent_dir = strdup (original_cwd);
+                    strcat (current_directory_->cwd, "/");
+                }
+            else
+                {
+                    // Если выбран файл, открываем его для чтения
+                    read_ (selected_path);
+
+                    // Добавляем "/" к текущему каталогу, если это необходимо
+                    size_t original_len = strlen (original_cwd);
+                    if (original_len > 0
+                        && original_cwd[original_len - 1] != '/')
+                        {
+                            strcat (current_directory_->cwd, "/");
+                        }
+                    strcpy (current_directory_->cwd, original_cwd);
+                }
+        }
 
     // Обновляем ncurses окно после обработки нажатия Enter
-    refresh();
-    free(original_cwd);
+    refresh ();
+    free (original_cwd);
 }
 
 /**
@@ -797,45 +927,56 @@ void handle_enter(char* files[]) {
  * @param path Путь к каталогу, размер которого требуется вычислить.
  * @return Общий размер каталога и его содержимого в KB.
  */
-float get_recursive_size_directory(char* path) {
+float
+get_recursive_size_directory (char *path)
+{
     float directory_size = 0;
-    DIR* dir_ = opendir(path);
-    if (dir_ == NULL) {
-        return 0;
-    }
+    DIR *dir_ = opendir (path);
+    if (dir_ == NULL)
+        {
+            return 0;
+        }
 
-    struct dirent* dir_entry;
+    struct dirent *dir_entry;
     struct stat file_stat;
     char temp_path[1000];
 
     // Перебираем все элементы в указанном каталоге
-    while ((dir_entry = readdir(dir_)) != NULL) {
-        // Игнорируем ссылки на текущий и родительский каталоги
-        if (strcmp(dir_entry->d_name, ".") != 0 &&
-            strcmp(dir_entry->d_name, "..") != 0) {
-            // Формируем полный путь к текущему элементу
-            snprintf(temp_path, sizeof(temp_path), "%s/%s", path,
-                     dir_entry->d_name);
+    while ((dir_entry = readdir (dir_)) != NULL)
+        {
+            // Игнорируем ссылки на текущий и родительский каталоги
+            if (strcmp (dir_entry->d_name, ".") != 0
+                && strcmp (dir_entry->d_name, "..") != 0)
+                {
+                    // Формируем полный путь к текущему элементу
+                    snprintf (temp_path, sizeof (temp_path), "%s/%s", path,
+                              dir_entry->d_name);
 
-            // Получаем информацию о текущем элементе
-            if (lstat(temp_path, &file_stat) == -1) {
-                continue;  // Пропускаем элемент в случае ошибки
-            }
+                    // Получаем информацию о текущем элементе
+                    if (lstat (temp_path, &file_stat) == -1)
+                        {
+                            continue; // Пропускаем элемент в случае ошибки
+                        }
 
-            // Если текущий элемент является каталогом, рекурсивно вычисляем его
-            // размер
-            if (S_ISDIR(file_stat.st_mode)) {
-                directory_size += get_recursive_size_directory(temp_path);
-            } else {
-                // Если текущий элемент не является каталогом, добавляем его
-                // размер к общему размеру
-                directory_size += (float)(file_stat.st_size) /
-                                  (float)1024;  // Преобразуем размер в KB
-            }
+                    // Если текущий элемент является каталогом, рекурсивно
+                    // вычисляем его размер
+                    if (S_ISDIR (file_stat.st_mode))
+                        {
+                            directory_size
+                                += get_recursive_size_directory (temp_path);
+                        }
+                    else
+                        {
+                            // Если текущий элемент не является каталогом,
+                            // добавляем его размер к общему размеру
+                            directory_size
+                                += (float)(file_stat.st_size)
+                                   / (float)1024; // Преобразуем размер в KB
+                        }
+                }
         }
-    }
 
-    closedir(dir_);
+    closedir (dir_);
     return directory_size;
 }
 
@@ -843,107 +984,138 @@ float get_recursive_size_directory(char* path) {
  * Отображает информацию о выбранном файле или каталоге в окне info_win.
  * @param files Массив имен файлов.
  */
-void show_file_info(char* files[]) {
-    wmove(info_win, 1, 1);
+void
+show_file_info (char *files[])
+{
+    wmove (info_win, 1, 1);
 
     // Проверяем, что выбранный элемент не является ссылкой на родительский
     // каталог
-    if (strcmp(files[selection], "..") != 0) {
-        char temp_address[1000];
-        snprintf(temp_address, sizeof(temp_address), "%s%s",
-                 current_directory_->cwd, files[selection]);
+    if (strcmp (files[selection], "..") != 0)
+        {
+            char temp_address[1000];
+            snprintf (temp_address, sizeof (temp_address), "%s%s",
+                      current_directory_->cwd, files[selection]);
 
-        struct stat file_stats;
+            struct stat file_stats;
 
-        // Получаем информацию о выбранном элементе с помощью lstat
-        if (lstat(temp_address, &file_stats) == 0) {
-            wprintw(info_win, "Name: %s\n", files[selection]);
+            // Получаем информацию о выбранном элементе с помощью lstat
+            if (lstat (temp_address, &file_stats) == 0)
+                {
+                    wprintw (info_win, "Name: %s\n", files[selection]);
 
-            // Определяем тип файла
-            wprintw(info_win, " Type:");
-            switch (file_stats.st_mode & S_IFMT) {
-                case S_IFREG:
-                    wprintw(info_win, " Regular File\n");
-                    break;
-                case S_IFDIR:
-                    wprintw(info_win, " Directory\n");
-                    break;
-                case S_IFLNK:
-                    wprintw(info_win, " Symbolic Link\n");
-                    break;
-                case S_IFIFO:
-                    wprintw(info_win, " FIFO/Named Pipe\n");
-                    break;
-                case S_IFCHR:
-                    wprintw(info_win, " Character Device\n");
-                    break;
-                case S_IFBLK:
-                    wprintw(info_win, " Block Device\n");
-                    break;
-                case S_IFSOCK:
-                    wprintw(info_win, " Socket\n");
-                    break;
-                default:
-                    wprintw(info_win, " Unknown\n");
-                    break;
-            }
-            wprintw(info_win, " Permissions: ");
-            wprintw(info_win, (file_stats.st_mode & S_IRUSR) ? "r" : "-");
-            wprintw(info_win, (file_stats.st_mode & S_IWUSR) ? "w" : "-");
-            wprintw(info_win, (file_stats.st_mode & S_IXUSR) ? "x" : "-");
-            wprintw(info_win, (file_stats.st_mode & S_IRGRP) ? "r" : "-");
-            wprintw(info_win, (file_stats.st_mode & S_IWGRP) ? "w" : "-");
-            wprintw(info_win, (file_stats.st_mode & S_IXGRP) ? "x" : "-");
-            wprintw(info_win, (file_stats.st_mode & S_IROTH) ? "r" : "-");
-            wprintw(info_win, (file_stats.st_mode & S_IWOTH) ? "w" : "-");
-            wprintw(info_win, (file_stats.st_mode & S_IXOTH) ? "x" : "-");
-            wprintw(info_win, "\n");
-            // Выводим дополнительную информацию
-            wprintw(info_win, " Device ID: [%lx,%lx]\n",
-                    (long)major(file_stats.st_dev),
-                    (long)minor(file_stats.st_dev));
-            wprintw(info_win, " Number of Links: %ld\n",
-                    (long)file_stats.st_nlink);
-            if (!S_ISDIR(file_stats.st_mode)) {
-                long long size = file_stats.st_size;
-                const char* unit;
+                    // Определяем тип файла
+                    wprintw (info_win, " Type:");
+                    switch (file_stats.st_mode & S_IFMT)
+                        {
+                        case S_IFREG:
+                            wprintw (info_win, " Regular File\n");
+                            break;
+                        case S_IFDIR:
+                            wprintw (info_win, " Directory\n");
+                            break;
+                        case S_IFLNK:
+                            wprintw (info_win, " Symbolic Link\n");
+                            break;
+                        case S_IFIFO:
+                            wprintw (info_win, " FIFO/Named Pipe\n");
+                            break;
+                        case S_IFCHR:
+                            wprintw (info_win, " Character Device\n");
+                            break;
+                        case S_IFBLK:
+                            wprintw (info_win, " Block Device\n");
+                            break;
+                        case S_IFSOCK:
+                            wprintw (info_win, " Socket\n");
+                            break;
+                        default:
+                            wprintw (info_win, " Unknown\n");
+                            break;
+                        }
+                    wprintw (info_win, " Permissions: ");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IRUSR) ? "r" : "-");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IWUSR) ? "w" : "-");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IXUSR) ? "x" : "-");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IRGRP) ? "r" : "-");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IWGRP) ? "w" : "-");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IXGRP) ? "x" : "-");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IROTH) ? "r" : "-");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IWOTH) ? "w" : "-");
+                    wprintw (info_win,
+                             (file_stats.st_mode & S_IXOTH) ? "x" : "-");
+                    wprintw (info_win, "\n");
+                    // Выводим дополнительную информацию
+                    wprintw (info_win, " Device ID: [%lx,%lx]\n",
+                             (long)major (file_stats.st_dev),
+                             (long)minor (file_stats.st_dev));
+                    wprintw (info_win, " Number of Links: %ld\n",
+                             (long)file_stats.st_nlink);
+                    if (!S_ISDIR (file_stats.st_mode))
+                        {
+                            long long size = file_stats.st_size;
+                            const char *unit;
 
-                if (size < 1024LL) {
-                    unit = "B";
-                } else if (size < 1024LL * 1024LL) {
-                    size /= 1024LL;
-                    unit = "KB";
-                } else if (size < 1024LL * 1024LL * 1024LL) {
-                    size /= (1024LL * 1024LL);
-                    unit = "MB";
-                } else {
-                    size /= (1024LL * 1024LL * 1024LL);
-                    unit = "GB";
+                            if (size < 1024LL)
+                                {
+                                    unit = "B";
+                                }
+                            else if (size < 1024LL * 1024LL)
+                                {
+                                    size /= 1024LL;
+                                    unit = "KB";
+                                }
+                            else if (size < 1024LL * 1024LL * 1024LL)
+                                {
+                                    size /= (1024LL * 1024LL);
+                                    unit = "MB";
+                                }
+                            else
+                                {
+                                    size /= (1024LL * 1024LL * 1024LL);
+                                    unit = "GB";
+                                }
+
+                            wprintw (info_win, " Size: %lld %s\n", size, unit);
+                        }
+                    wprintw (info_win, " Last Status Change:\n %s",
+                             ctime (&file_stats.st_ctime));
+                    wprintw (info_win, " Last Access:\n %s",
+                             ctime (&file_stats.st_atime));
+                    wprintw (info_win, " Last Modification:\n %s",
+                             ctime (&file_stats.st_mtime));
                 }
-
-                wprintw(info_win, " Size: %lld %s\n", size, unit);
-            }
-            wprintw(info_win, " Last Status Change:\n %s",
-                    ctime(&file_stats.st_ctime));
-            wprintw(info_win, " Last Access:\n %s",
-                    ctime(&file_stats.st_atime));
-            wprintw(info_win, " Last Modification:\n %s",
-                    ctime(&file_stats.st_mtime));
-        } else {
-            // Если возникла ошибка при получении информации о файле
-            perror("Error getting file status");
+            else
+                {
+                    // Если возникла ошибка при получении информации о файле
+                    perror ("Error getting file status");
+                }
         }
-    } else {
-        if (strcmp(current_directory_->cwd, "/") == 0) {
-            wprintw(info_win, "Root directory\n");
-        } else {
-            wprintw(info_win, "Return to %s\n", current_directory_->parent_dir);
+    else
+        {
+            if (strcmp (current_directory_->cwd, "/") == 0)
+                {
+                    wprintw (info_win, "Root directory\n");
+                }
+            else
+                {
+                    wprintw (info_win, "Return to %s\n",
+                             current_directory_->parent_dir);
+                }
         }
-    }
 
     // Обновляем окно info_win, чтобы отобразить все изменения
-    wrefresh(info_win);
+    wrefresh (info_win);
 }
+
 /**
  * @brief Выполняет операцию XOR между checked_value и gen_poly.
  *
@@ -956,10 +1128,13 @@ void show_file_info(char* files[]) {
  * корректно инициализированы перед вызовом данной функции. Эта функция
  * используется в процессе вычисления CRC.
  */
-void XOR() {
-    for (int j = 1; j < N; j++) {
-        checked_value[j] = ((checked_value[j] == gen_poly[j]) ? '0' : '1');
-    }
+void
+XOR ()
+{
+    for (int j = 1; j < N; j++)
+        {
+            checked_value[j] = ((checked_value[j] == gen_poly[j]) ? '0' : '1');
+        }
 }
 
 /**
@@ -972,102 +1147,127 @@ void XOR() {
  *
  * @param files Массив строк с именами файлов для обработки.
  */
-void crc(char* files[]) {
+void
+crc (char *files[])
+{
     char selected_path[PATH_MAX];
     // Формирование пути к выбранному файлу
-    snprintf(selected_path, PATH_MAX, "%s/%s", current_directory_->cwd,
-             files[selection]);
+    snprintf (selected_path, PATH_MAX, "%s/%s", current_directory_->cwd,
+              files[selection]);
     // Открытие файла для чтения
-    FILE* file = fopen(selected_path, "r");
-    if (file == NULL) {
-        // Вывод сообщения об ошибке в окно информации
-        wclear(info_win);
-        wrefresh(info_win);
-        wprintw(info_win, "Error opening file.\n");
-        wprintw(info_win, "Press Enter to return...\n");
-        wrefresh(info_win);
-        // Ожидание нажатия клавиши Enter или Return для возврата
-        char ch;
-        while ((ch = getch()) != KEY_ENTER && ch != '\n')
-            ;
-        return;
-    }
+    FILE *file = fopen (selected_path, "r");
+    if (file == NULL)
+        {
+            // Вывод сообщения об ошибке в окно информации
+            wclear (info_win);
+            box (info_win, '|', '-');
+            wmove (info_win, 1, 1);
+            wrefresh (info_win);
+            wprintw (info_win, "Error opening file.\n");
+            wprintw (info_win, "Press Enter to return...\n");
+            box (info_win, '|', '-');
+            wrefresh (info_win);
+            // Ожидание нажатия клавиши Enter или Return для возврата
+            char ch;
+            while ((ch = getch ()) != KEY_ENTER && ch != '\n')
+                ;
+            return;
+        }
     int i = 0, c;
     // Ввод генерирующего полинома
-    wclear(info_win);
-    wmove(info_win, 1, 1);
-    wrefresh(path_win);
-    wprintw(info_win, "Enter the Generating polynomial: ");
-    wclear(path_win);
-    wmove(path_win, 1, 0);
-    wrefresh(info_win);
-    while ((c = wgetch(path_win)) != '\n') {
-        if (c == 127 || c == 8) {
-            gen_poly[--i] = '\0';
-        } else {
-            gen_poly[i++] = c;
-            gen_poly[i] = '\0';
+    wclear (info_win);
+    box (info_win, '|', '-');
+    wmove (info_win, 1, 1);
+    wrefresh (path_win);
+    wprintw (info_win, "Enter the Generating polynomial: ");
+    wclear (path_win);
+    wmove (path_win, 1, 0);
+    wrefresh (info_win);
+    while ((c = wgetch (path_win)) != '\n')
+        {
+            if (c == 127 || c == 8)
+                {
+                    gen_poly[--i] = '\0';
+                }
+            else
+                {
+                    gen_poly[i++] = c;
+                    gen_poly[i] = '\0';
+                }
+            wclear (path_win);
+            wmove (path_win, 1, 0);
+            wprintw (path_win, "%s", gen_poly);
         }
-        wclear(path_win);
-        wmove(path_win, 1, 0);
-        wprintw(path_win, "%s", gen_poly);
-    }
-    wclear(info_win);
-    wprintw(info_win, "Enter the summary before downloading:");
-    wrefresh(info_win);
+    wclear (info_win);
+    box (info_win, '|', '-');
+    wmove (info_win, 1, 1);
+    wprintw (info_win, "Enter the summary before downloading:");
+    wrefresh (info_win);
 
     // Ввод суммы для проверки
-    i = 0;  // Сброс счетчика для нового ввода
-    wclear(path_win);
-    wrefresh(path_win);
+    i = 0; // Сброс счетчика для нового ввода
+    wclear (path_win);
+    wrefresh (path_win);
 
-    while ((c = wgetch(path_win)) != '\n') {
-        if (c == 127 || c == 8) {
-            check_value[--i] = '\0';
-        } else {
-            check_value[i++] = c;
-            check_value[i] = '\0';
+    while ((c = wgetch (path_win)) != '\n')
+        {
+            if (c == 127 || c == 8)
+                {
+                    check_value[--i] = '\0';
+                }
+            else
+                {
+                    check_value[i++] = c;
+                    check_value[i] = '\0';
+                }
+            wclear (path_win);
+            wmove (path_win, 1, 0);
+            wprintw (path_win, "%s", check_value);
+            wrefresh (path_win);
         }
-        wclear(path_win);
-        wmove(path_win, 1, 0);
-        wprintw(path_win, "%s", check_value);
-        wrefresh(path_win);
-    }
 
     int j;
     char ch;
 
     // Инициализация проверяемых данных N битами данных из файла
-    for (i = 0; i < N; i++) {
-        if ((ch = fgetc(file)) == EOF) {
-            break;
+    for (i = 0; i < N; i++)
+        {
+            if ((ch = fgetc (file)) == EOF)
+                {
+                    break;
+                }
+            checked_value[i] = ch;
         }
-        checked_value[i] = ch;
-    }
     // Вычисление CRC и проверка суммы
-    do {
-        if (checked_value[0] == '1')
-            XOR();
+    do
+        {
+            if (checked_value[0] == '1')
+                XOR ();
 
-        for (j = 0; j < N - 1; j++)
-            checked_value[j] = checked_value[j + 1];
+            for (j = 0; j < N - 1; j++)
+                checked_value[j] = checked_value[j + 1];
 
-        if ((ch = fgetc(file)) != EOF) {
-            checked_value[j] = ch;
-            i++;
+            if ((ch = fgetc (file)) != EOF)
+                {
+                    checked_value[j] = ch;
+                    i++;
+                }
         }
-    } while (ch != EOF);
+    while (ch != EOF);
 
-    fclose(file);
-    wclear(info_win);
+    fclose (file);
+    wclear (info_win);
+    box (info_win, '|', '-');
+    wmove (info_win, 1, 1);
     // Вывод результата CRC и проверка скачивания
-    wprintw(info_win, "CRC or Check value is: %s\n", checked_value);
-    if (strcmp(check_value, checked_value) == 0)
-        wprintw(info_win, "Data downloaded succesfully\n");
+    wprintw (info_win, "CRC or Check value is: %s\n", checked_value);
+    if (strcmp (check_value, checked_value) == 0)
+        wprintw (info_win, "  Data downloaded succesfully\n");
     else
-        wprintw(info_win, "Data downloaded with mistakes\n");
-    wprintw(info_win, "Press Enter to return...\n");
-    wrefresh(info_win);
-    while ((ch = getch()) != KEY_ENTER && ch != '\n')
-        ;
+        wprintw (info_win, "  Data downloaded with mistakes\n");
+    wprintw (info_win, "  Press Enter to return...\n");
+    wrefresh (info_win);
+    while ((ch = getch ()) != KEY_ENTER && ch != '\n')
+        {
+        }
 }
