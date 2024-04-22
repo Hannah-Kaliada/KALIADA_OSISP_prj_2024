@@ -27,6 +27,13 @@
     <p>Compile and run the program, then use the keyboard commands to manage files and directories in the terminal interface.</p>
     <h2>Dependencies</h2>
     <p>This program requires the ncurses library for terminal UI.</p>
+    <h2>Development Environment Details</h2>
+<ul>
+    <li>Operating System: macOS Sonoma 14.4.1 (Build 23E224)</li>
+    <li>Development Tools: Xcode</li>
+    <li>Programming Language: C (ISO/IEC 9899:2011)</li>
+    <li>File System Type: APFS</li>
+</ul>
   <h2>License</h2>
     <p>Copyright &copy; 2024 Hanna Martyniuk<br>
     This project is licensed.
