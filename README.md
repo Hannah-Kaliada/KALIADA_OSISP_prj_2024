@@ -60,7 +60,7 @@
 <h2>Usage</h2>
 <p>After compiling, you can run the program by executing the generated executable.</p>
 <pre>
-	<code>./main</code>
+	<code>./FSUtility</code>
 </pre>
 <p>You can also use <code>make sudo</code> to compile and execute the program with elevated privileges: </p>
 <pre>
