@@ -1,10 +1,11 @@
 #ifndef CONFIG
 #define CONFIG
 
-typedef struct directory_ {
-  char cwd[1000];
-  char *parent_dir;
-  char *files[];
+typedef struct directory_
+{
+    char cwd[1000];
+    char *parent_dir;
+    char *files[];
 } directory_t;
 
 #define DIR_COLOR 2
@@ -35,6 +36,8 @@ typedef struct directory_ {
 
 #define KEY_FIND 'f'
 
-#define isDir(mode) (S_ISDIR(mode))
+#define KEY_HELP 'h'
+
+#define isDir(mode) (S_ISDIR (mode))
 
 #endif
