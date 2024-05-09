@@ -3,16 +3,16 @@
 <h2>Key Commands</h2>
 <ul>
   <li>
-    <strong>r:</strong> Rename a file
+    <strong>r:</strong> Rename file
   </li>
   <li>
-    <strong>c:</strong> Copy files
+    <strong>c:</strong> Copy file
   </li>
   <li>
-    <strong>d:</strong> Delete files
+    <strong>d:</strong> Delete file
   </li>
   <li>
-    <strong>m:</strong> Move files
+    <strong>m:</strong> Move file
   </li>
   <li>
     <strong>a:</strong> Calculate CRC (Cyclic Redundancy Check)
@@ -21,7 +21,7 @@
     <strong>s:</strong> Sort files
   </li>
   <li>
-    <strong>f:</strong> Find files
+    <strong>f:</strong> Find files by regular expression
   </li>
 </ul>
 <h2>Functionality</h2>
@@ -36,6 +36,7 @@
   <li>Calculate total size of directory and subdirectories</li>
   <li>Display full file information</li>
   <li>Calculate CRC for files</li>
+  <li>Find files by regular expression</li>
 </ul>
 <h2>Downloading from GitHub</h2>
 <p>To download this project from GitHub onto your machine:</p>
