@@ -197,6 +197,50 @@ main ()
                 case KEY_FIND:
                     find (files);
                     break;
+                case KEY_HELP:
+                    {
+                        wclear (info_win);
+                        wmove (info_win, 1, 1);
+                        wprintw (info_win,
+                                 " Press \"k\" to "
+                                 "scroll up\n");
+                        wprintw (info_win,
+                                 " Press \"j\" to "
+                                 "scroll down\n");
+                        wprintw (info_win,
+                                 " Press \"r\" to "
+                                 "rename file\n");
+                        wprintw (info_win,
+                                 " Press \"c\" to "
+                                 "copy file\n");
+                        wprintw (info_win,
+                                 " Press \"m\" to "
+                                 "move file\n");
+                        wprintw (info_win,
+                                 " Press \"d\" to "
+                                 "delete file\n");
+                        wprintw (info_win,
+                                 " Press \"a\" to "
+                                 "calculate CRC\n");
+                        wprintw (info_win,
+                                 " Press \"s\" to "
+                                 "sort files\n");
+                        wprintw (info_win,
+                                 " Press \"f\" to "
+                                 "find files\n");
+                        wprintw (info_win, "Press \"h\" to "
+                                           "show help\n");
+                        wprintw (info_win,
+                                 " Press \"q\" to "
+                                 "exit\n");
+                        wprintw (info_win,
+                                 " Press Enter to "
+                                 "continue...\n");
+                        wrefresh (info_win);
+                        while (getch () != '\n')
+                            ;
+                        break;
+                    }
                 }
 
             for (int i = 0; i < len; i++)
@@ -1363,6 +1407,8 @@ show_file_info (char *files[])
                              "expression\n");
                     wprintw (info_win,
                              " r: Rename files\n");
+                    wprintw (info_win,
+                             " h: Show all commands\n");
                 }
             else
                 {
