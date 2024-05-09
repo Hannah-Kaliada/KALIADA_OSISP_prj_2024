@@ -1,7 +1,7 @@
 NCURSES_CFLAGS := $(shell pkg-config --cflags ncursesw)
 NCURSES_LIBS := $(shell pkg-config --libs ncursesw)
 LIBS += $(NCURSES_LIBS)
-CFLAGS += $(NCURSES_CFLAGS)
+CFLAGS += $(NCURSES_CFLAGS) -Wno-macro-redefined
 SRCS = main.c
 OBJS = $(SRCS:.c=.o)
 TARGET = FSUtility
@@ -12,5 +12,7 @@ $(TARGET): $(OBJS)
 	gcc $(CFLAGS) -c $< -o $@
 clean:
 	rm -f $(OBJS) $(TARGET)
-run:
+sudo: clean all
 	sudo ./$(TARGET)
+run: clean all
+	./$(TARGET)
