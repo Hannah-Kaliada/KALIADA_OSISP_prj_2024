@@ -8,6 +8,14 @@ typedef struct directory_
     char *files[];
 } directory_t;
 
+#define N strlen (gen_poly) // Длина генерирующего полинома
+
+#define MAX_PATH_LENGTH 1000
+
+#define MAX_MATCHES 100
+
+#define SIZE_LIMIT 10737418240
+
 #define DIR_COLOR 2
 
 #define STATUS_SELECTED_COLOR 1
@@ -37,6 +45,10 @@ typedef struct directory_
 #define KEY_FIND 'f'
 
 #define KEY_HELP 'h'
+
+#define KEY_DIR_SIZE 'z'
+
+#define KEY_GAME 'g'
 
 #define isDir(mode) (S_ISDIR (mode))
 
